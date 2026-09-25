@@ -1,0 +1,63 @@
+/* A touch-sized slider with lightweight illustration previews. */
+.turnjs-slider {
+	position: relative;
+	width: 100%;
+	max-width: 560px;
+	height: 44px;
+	margin: 0 auto;
+	touch-action: none;
+}
+.turnjs-slider::before {
+	content: "";
+	position: absolute;
+	top: 20px;
+	left: 0;
+	right: 0;
+	height: 4px;
+	border-radius: 4px;
+	background: #ded8ce;
+}
+.turnjs-slider .ui-slider {
+	position: relative;
+	height: 44px;
+	margin: 0 22px;
+	text-align: left;
+}
+.turnjs-slider .ui-slider-handle {
+	position: absolute;
+	top: 0;
+	width: 44px;
+	height: 44px;
+	margin-left: -22px;
+	border-radius: 50%;
+	cursor: grab;
+	touch-action: none;
+}
+.turnjs-slider .ui-slider-handle::after {
+	content: "";
+	position: absolute;
+	top: 18px;
+	left: 6px;
+	width: 32px;
+	height: 8px;
+	border-radius: 6px;
+	background: #527c94;
+}
+.turnjs-slider .ui-state-active { cursor: grabbing; }
+.turnjs-slider .ui-state-active::after, .turnjs-slider .ui-state-hover::after { background: #305b74; }
+.turnjs-slider .thumbnail {
+	display: none;
+	position: absolute;
+	bottom: 56px;
+	width: 80px;
+	height: 120px;
+	padding: 6px;
+	border-radius: 7px;
+	background: #f6e8d2;
+	box-shadow: 0 3px 14px rgba(52,42,28,.25);
+	transform: translateX(-50%);
+	pointer-events: none;
+	z-index: 10002;
+}
+.turnjs-slider .thumbnail.show { display: block; }
+.turnjs-slider .thumbnail img { display: block; width: 80px; height: 120px; object-fit: contain; }

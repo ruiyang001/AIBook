@@ -1,0 +1,5 @@
+# Operating-system metadata
+.DS_Store
+
+# Local IDE settings
+.idea/

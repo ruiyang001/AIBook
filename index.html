@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="An interactive children's book about AI literacy for co-reading with caregivers and teachers.">
+	<title>Eva and the Digital Parrot</title>
+	<link rel="stylesheet" href="css/jquery.ui.css">
+	<link rel="stylesheet" href="css/reader.css">
+	<script src="vendor/jquery.min.1.7.js"></script>
+	<script src="vendor/jquery-ui-1.8.20.custom.min.js"></script>
+	<script src="vendor/jquery.mousewheel.min.js"></script>
+	<script src="vendor/hash.js"></script>
+</head>
+<body>
+<main id="canvas" aria-label="Eva and the Digital Parrot reader">
+	<div id="book-zoom">
+		<div class="sj-book" aria-label="Eva and the Digital Parrot">
+			<div depth="5" class="hard" aria-label="Front cover"><div class="side"></div></div>
+			<div depth="5" class="hard front-side"><div class="depth"></div></div>
+			<div class="own-size"></div>
+			<div class="own-size even"></div>
+			<div class="hard fixed back-side p53" aria-label="Inside back cover"><div class="depth"></div></div>
+			<div class="hard p54" aria-label="Back cover"></div>
+		</div>
+	</div>
+	<nav class="reader-controls" aria-label="Book navigation">
+		<button id="previous-page" class="page-arrow" type="button" aria-label="Previous page" title="Previous page" disabled>
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+		</button>
+		<div id="slider-bar" class="turnjs-slider">
+			<div id="slider"></div>
+			<div id="slider-preview" class="thumbnail" aria-hidden="true"><img alt="" width="80" height="120"></div>
+		</div>
+		<button id="next-page" class="page-arrow" type="button" aria-label="Next page" title="Next page">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+		</button>
+	</nav>
+</main>
+<noscript><p class="no-script">Please enable JavaScript to read this interactive book.</p></noscript>
+<script src="vendor/turn.min.js"></script>
+<script src="js/reader.js"></script>
+<script>
+function loadApp() {
+	var flipbook = $('.sj-book'), initialPage = pageFromHash(), layout = getReaderLayout();
+	applyReaderLayout(layout);
+	$('#slider').slider({
+		min: 1, max: 28,
+		start: function(event, ui) { setPreview(ui.value); },
+		slide: function(event, ui) { setPreview(ui.value); },
+		stop: function(event, ui) {
+			flipbook.turn('page', pageForView(ui.value));
+			if (document.activeElement === $('#slider .ui-slider-handle')[0]) setPreview(ui.value);
+			else hidePreview();
+		}
+	});
+	flipbook.turn({
+		width: layout.width, height: layout.height, display: layout.display, page: initialPage,
+		elevation: 50, acceleration: !isChrome(), autoCenter: true, gradients: true, duration: 1000, pages: 54,
+		when: {
+			turning: function(e, page) {
+				var book = $(this), currentPage = book.turn('page'), pages = book.turn('pages');
+				// Keep the original hard-cover transition in two-page mode.
+				if (book.turn('display') === 'double') {
+					if (currentPage > 3 && currentPage < pages - 3) {
+						if (page === 1 || page === pages) {
+							book.turn('page', page === 1 ? 2 : pages - 1).turn('stop').turn('page', page);
+							e.preventDefault();
+							return;
+						}
+					} else if (page > 3 && page < pages - 3 && (currentPage === 1 || currentPage === pages)) {
+						book.turn('page', currentPage === 1 ? 2 : pages - 1).turn('stop').turn('page', page);
+						e.preventDefault();
+						return;
+					}
+				}
+				updateDepth(book, page);
+				Hash.go('page/' + page).update();
+				updateNavigation(book, page);
+			},
+			turned: function(e, page) {
+				var book = $(this);
+				if (book.turn('display') === 'double' && (page === 2 || page === 3)) book.turn('peel', 'br');
+				updateDepth(book);
+				updateNavigation(book, page);
+				book.turn('center');
+			},
+			end: function() { updateDepth($(this)); },
+			missing: function(e, pages) {
+				for (var i = 0; i < pages.length; i++) addPage(pages[i], $(this));
+			}
+		}
+	});
+	$('#slider').slider('option', 'max', numberOfViews(flipbook));
+	updateNavigation(flipbook);
+	setupSliderTouch(flipbook);
+	$('#slider .ui-slider-handle').attr({role: 'slider', tabindex: 0, 'aria-label': 'Choose a book spread', 'aria-valuemin': 1, 'aria-valuemax': numberOfViews(flipbook)})
+		.on('focus mouseenter', function() { setPreview($('#slider').slider('value')); })
+		.on('blur mouseleave', function() { if (!$(this).hasClass('ui-state-active')) hidePreview(); });
+	$('#previous-page').on('click', function() { flipbook.turn('previous'); });
+	$('#next-page').on('click', function() { flipbook.turn('next'); });
+	$(document).on('keydown', function(e) {
+		// The slider handles its own keyboard interaction.
+		if ($(e.target).closest('#slider, input, textarea, select, [contenteditable]').length || e.altKey || e.ctrlKey || e.metaKey) return;
+		if (e.keyCode === 37 || e.keyCode === 39) {
+			e.preventDefault();
+			flipbook.turn(e.keyCode === 37 ? 'previous' : 'next');
+		}
+	});
+	$('#book-zoom').mousewheel(function(event, delta, deltaX) {
+		if (!deltaX) return;
+		event.preventDefault();
+		var data = $(this).data();
+		if (data.scrollX === undefined) data.scrollX = $('#slider').slider('value') * 30;
+		data.scrollX = Math.max(30, Math.min(numberOfViews(flipbook) * 30, data.scrollX + deltaX));
+		var page = pageForView(Math.round(data.scrollX / 30));
+		if ($.inArray(page, flipbook.turn('view')) === -1) flipbook.turn('page', page);
+		clearTimeout(data.scrollTimer);
+		data.scrollTimer = setTimeout(function() { data.scrollX = undefined; }, 1000);
+	});
+	Hash.on('^page/([0-9]+)$', {
+		yep: function() { var page = pageFromHash(); if (page !== flipbook.turn('page')) flipbook.turn('page', page); },
+		nop: function() { flipbook.turn('page', 1); }
+	});
+	var resizeTimer;
+	$(window).on('resize orientationchange', function() {
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(resizeReader, 100);
+	});
+	flipbook.addClass('animated');
+	$('#canvas').addClass('ready');
+}
+loadApp();
+</script>
+</body>
+</html>
