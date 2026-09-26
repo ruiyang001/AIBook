@@ -1,8 +1,8 @@
 # Eva and the Digital Parrot
 
-An interactive digital children's book about AI literacy, designed for children to read together with caregivers or teachers. Its illustrated pages invite conversations about AI through a familiar, animated page-turning experience.
+*Eva and the Digital Parrot* is an interactive digital picture book about AI literacy, designed for children to read with caregivers or teachers. Through its illustrated story, the book supports conversations about how AI uses language, how it differs from people, and how children can use AI thoughtfully and creatively.
 
-**[Read the book online](https://ruiyang001.github.io/aibook/)**
+**[Read the book online](https://ruiyang001.github.io/AIBook/)**
 
 ## Reading controls
 
